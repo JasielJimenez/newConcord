@@ -1,0 +1,7 @@
+sceneSetups:
+- path: Assets/Concord-master/Assets/Scenes/TestLevel.unity
+  isLoaded: 0
+  isActive: 0
+- path: Assets/Testing/Scenes/Town.unity
+  isLoaded: 1
+  isActive: 1
