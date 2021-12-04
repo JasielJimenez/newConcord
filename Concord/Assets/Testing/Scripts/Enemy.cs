@@ -11,7 +11,7 @@ public class Enemy : MonoBehaviour
     public float attackRange = 2;
     public float speed = 1.0f;
     private float storeSpeed = 1.0f;
-    public Transform target;
+    public GameObject target;
     public GameObject enemy;
     public GameObject hitBox;
     private float playerHealth;
@@ -20,6 +20,7 @@ public class Enemy : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         anim.SetBool("Enemy_Alive", true);
+        target = GameObject.FindWithTag("Player");
         range = range * range;
         attackRange = attackRange * attackRange;
         deadCheck = enemy.GetComponent<EnemyStats>().dead;
@@ -35,14 +36,15 @@ public class Enemy : MonoBehaviour
     void follow()
     {
         anim.SetFloat("Enemy_Speed", 1.0f);
-        transform.LookAt(target);
-        transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        transform.LookAt(target.transform);
+        //transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        transform.position += transform.forward * speed * Time.deltaTime;
     }
 
     void attack()
     {
         anim.SetBool("Enemy_Range", true);
-        transform.LookAt(target);
+        transform.LookAt(target.transform);
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
     }
 
@@ -62,6 +64,16 @@ public class Enemy : MonoBehaviour
         speed = 1.0f;
     }
 
+    void attackSpeedUp()
+    {
+        speed = 4.0f;
+    }
+
+    void stopMotion()
+    {
+        speed = 0.0f;
+    }
+
     void attackNormalSpeed()
     {
         speed = storeSpeed;
@@ -78,7 +90,7 @@ public class Enemy : MonoBehaviour
         }
         else if(playerHealth > 0.0f)
         {
-            float distance = (target.position - transform.position).sqrMagnitude;
+            float distance = (target.transform.position - transform.position).sqrMagnitude;
             if(distance <= attackRange)
             {
                 attack();

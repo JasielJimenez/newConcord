@@ -20,8 +20,6 @@ public class DemonDog : MonoBehaviour
     public GameObject frontHitbox;
     public GameObject backHitbox;
 
-    public Transform target;
-
     public float speed = 0.0f;
     public float runRange = 0.0f;
     public float walkRange = 0.0f;
@@ -38,6 +36,8 @@ public class DemonDog : MonoBehaviour
         runRange = runRange * runRange;
         walkRange = walkRange * walkRange;
         attackRange = attackRange * attackRange;
+        player = GameObject.FindWithTag("Player");
+        bossHealthBar = GameObject.FindWithTag("BossHealth");
         bossHealthBar.SetActive(false);
     }
 
@@ -92,8 +92,8 @@ public class DemonDog : MonoBehaviour
     public void attackStance()
     {
         speed = 0.0f;
-        float frontDistance = (target.position - front.transform.position).sqrMagnitude;
-        float backDistance = (target.position - back.transform.position).sqrMagnitude;
+        float frontDistance = (player.transform.position - front.transform.position).sqrMagnitude;
+        float backDistance = (player.transform.position - back.transform.position).sqrMagnitude;
         //float leftDistance = (target.position - left.transform.position).sqrMagnitude;
         //float rightDistance = (target.position - right.transform.position).sqrMagnitude;
         //randomAttack = Random.Range(0,2);
@@ -123,7 +123,7 @@ public class DemonDog : MonoBehaviour
 
     public void rangeCheck()
     {
-        float distance = (target.position - transform.position).sqrMagnitude;
+        float distance = (player.transform.position - transform.position).sqrMagnitude;
         if(distance <= attackRange)
         {
             anim.SetBool("RunRange", false);
@@ -139,7 +139,7 @@ public class DemonDog : MonoBehaviour
             anim.SetBool("BackAttack", false);
             anim.SetBool("FrontAttack", false);
             speed = 3.0f;
-            transform.LookAt(target);
+            transform.LookAt(player.transform);
             transform.Translate(Vector3.forward * speed * Time.deltaTime);
         }
         else if(distance <= runRange && stillAttacking == false)
@@ -149,9 +149,10 @@ public class DemonDog : MonoBehaviour
             anim.SetBool("AttackRange", false);
             anim.SetBool("BackAttack", false);
             anim.SetBool("FrontAttack", false);
-            transform.LookAt(target);
+            transform.LookAt(player.transform);
             transform.Translate(Vector3.forward * speed * Time.deltaTime);
             bossHealthBar.SetActive(true);
+            //CLOSE GATE HERE
         }
         else
         {

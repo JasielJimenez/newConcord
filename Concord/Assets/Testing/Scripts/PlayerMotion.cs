@@ -1,23 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class PlayerMotion : MonoBehaviour
 {
-    //public float moveSpeed;
-    //private Vector3 moveDirection;
-    //public Transform pivot;
-    //public float rotateSpeed;
-    //public CharacterController controller;
-
+    #region variables
     Animator anim;
-    private Vector3 moveDirection = Vector3.zero;
-    public float rotateSpeed = 0.0f;
-    //private CharacterController controller;
-    public Vector3 point;
-
     public float holdAttack;
     public float speed = 6.0f;
+    private float runSpeed = 0.0f;
     private float trackSpeed = 1.0f;
     public float rollDistance = 1.0f;
     //public float rotateSpeed = 6.0f;
@@ -29,39 +21,38 @@ public class PlayerMotion : MonoBehaviour
     public bool deadTest = false;
     public bool invulnerable = false;
     public bool isRolling = false;
+    public bool isTakingDamage = false;
+    public bool isAttacking = false;
     public GameObject gamemanager;
-    public Transform cam;
-    public GameObject player;
-    public GameObject sword;
-    public GameObject swordLight;
     public GameObject swordHitbox;
-    public GameObject swordGrabRange;
-    public GameObject hand;
-
+    public GameObject cam;
+    public CharacterController controller;
+    #endregion
 
     void Start()
     {
         anim = GetComponent<Animator>();
-        point = transform.position;
+        gamemanager = GameObject.Find("Gamemanager");
+        cam = GameObject.Find("Main Camera");
+        controller = GetComponent<CharacterController>();
         trackSpeed = speed;
-        holdAttack = player.GetComponent<PlayerStats>().attack;
-        //controller = GetComponent<CharacterController>();
-        //controller = GetComponent<CharacterController>();
+        runSpeed = speed;
+        holdAttack = this.GetComponent<PlayerStats>().attack;
+        cam.GetComponent<CameraControl>().setCameraTarget();
     }
 
+    #region animationFunctions
     public void beginRoll()
     {
         invulnerable = true;
         isRolling = true;
-        //transform.Translate(Vector3.forward * 10 * Time.deltaTime);
     }
 
     public void endRoll()
     {
         invulnerable = false;
         isRolling = false;
-        anim.SetBool("roll", false);
-        //ALLOW FOR ATTACKING IMMEDIATELY AFTERWARDS
+        anim.SetBool("Roll", false);
     }
 
     public void swordStrike()
@@ -74,6 +65,7 @@ public class PlayerMotion : MonoBehaviour
         swordHitbox.SetActive(false);
     }
 
+    /*
     public void startStrongAttack()
     {
         speed = 0.0f;
@@ -88,14 +80,14 @@ public class PlayerMotion : MonoBehaviour
         anim.SetBool("strongAttack", false);
         player.GetComponent<PlayerStats>().attack = holdAttack;
     }
-
+    */
     void attackBegin()
     {
         midAttack = true;
         trackSpeed = speed;
         speed = 0.0f;
         continueAttack = false;
-        anim.SetBool("continueCombo",false);
+        anim.SetBool("ContinueCombo",false);
     }
 
     void attackEnd()
@@ -103,52 +95,60 @@ public class PlayerMotion : MonoBehaviour
         speed = trackSpeed;
         if(continueAttack == true)
         {
-            anim.SetBool("continueCombo",true);
+            Debug.Log("ATTACK AGAIN");
+            anim.SetBool("ContinueCombo",true);
+        }
+        else
+        {
+            isAttacking = false;
         }
         midAttack = false;
     }
+    #endregion
 
-    void OnTriggerEnter(Collider other)
+    #region TakingDamage
+    public void flinch()
     {
-        if(other.gameObject.name == "Hitbox")
-        {
-            this.GetComponent<Rigidbody>().AddForce(transform.forward * -2.0f);
-        }
+        anim.SetBool("IsHit", true);
+        isTakingDamage = true;
     }
 
-    //void OnTriggerStay(Collider other)
-    //{
-    //    //Debug.Log("YO");
-    //    if(other.gameObject.name == "SwordGrab")
-    //    {
-    //        //Debug.Log("HEY");
-    //        if(Input.GetKeyDown("space"))
-    //        {
-    //            swordLight.SetActive(false);
-    //            swordGrabRange.SetActive(false);
-    //            sword.transform.SetParent(hand.transform);
-    //            sword.transform.localPosition = new Vector3(0.0f,0.0f,0.0f);
-    //            sword.transform.Rotate(0.0f, 90.0f, -45.0f);
-    //            anim.SetBool("SwordHeld",true);
-    //            swordGrip = true;
-    //        }
-    //    }
-    //}
+    public void stopFlinch()
+    {
+        anim.SetBool("IsHit", false);
+        isTakingDamage = false;
+    }
+    #endregion
 
     void Update()
     {
-        deadTest = player.GetComponent<PlayerStats>().playerDead;
+        deadTest = this.GetComponent<PlayerStats>().playerDead;
         gamestart = gamemanager.GetComponent<gamemanager>().gameStart;
         gamepaused = gamemanager.GetComponent<gamemanager>().paused;
         if(deadTest == true)
         {
-            anim.SetBool("isDead",true);
+            anim.SetBool("IsDead",true);
+            speed = 0;
+            gamemanager.GetComponent<gamemanager>().GameOver();
         }
         else if (gamestart == true && gamepaused == false)
         {
             if(isRolling == true)
             {
-                transform.Translate(Vector3.forward * rollDistance * Time.deltaTime);
+                //transform.Translate(Vector3.forward * rollDistance * Time.deltaTime);
+                controller.Move(transform.forward * rollDistance * Time.deltaTime);
+            }
+            else if(isTakingDamage == true)
+            {
+                //DO NOTHING
+                //transform.Translate(-Vector3.forward * 200 * Time.deltaTime);
+                controller.Move(-transform.forward * 200 * Time.deltaTime);
+                anim.SetBool("IsHit", false);
+                isTakingDamage = false;
+            }
+            else if(isAttacking == true)
+            {
+
             }
             else
             {
@@ -158,17 +158,20 @@ public class PlayerMotion : MonoBehaviour
                 }
                 else if(Input.GetKeyDown("space"))
                 {
-                    anim.SetBool("roll", true);
+                    anim.Play("Roll");
+                    anim.SetBool("Roll", true);
+                    
                 }
-                else if(Input.GetMouseButtonDown(1))
+                else if(Input.GetButton("Guard"))
                 {
-                    anim.SetBool("strongAttack", true);
+                    anim.SetBool("IsGuarding", true);
                 }
                 else
                 {
-                    //anim.SetBool("punchAttack1", false);
-                    anim.SetBool("swordAttack1", false);
+                    anim.SetBool("SwordAttack1", false);
+                    anim.SetBool("IsGuarding", false);
                     ControlPlayer();
+                    //PlayerMove();
                 }
 
                 if(midAttack == true)
@@ -178,112 +181,41 @@ public class PlayerMotion : MonoBehaviour
                         continueAttack = true;
                     }
                 }
+                if(Input.GetButtonDown("Heal"))
+                {
+                    this.GetComponent<PlayerStats>().healHealth();
+                }
             }
         }
     }
 
     void Attack()
     {
-        //if(swordGrip == true)
-        //{
-            anim.SetBool("swordAttack1", true);
-        //}
-        //else{
-        //    anim.SetBool("punchAttack1", true);
-        //}
+            anim.SetBool("SwordAttack1", true);
+            isAttacking = true;
     }
 
     void ControlPlayer()
     {
-        float moveHorizontal = Input.GetAxisRaw("Horizontal");
-        float moveVertical = Input.GetAxisRaw("Vertical");
-        Vector3 camF = cam.forward;
-        Vector3 camR = cam.right;
-        camF.y = 0;
-        camR.y = 0;
-        camF = camF.normalized;
-        camR = camR.normalized;
-
-        //TEST
         Vector3 groundForward = new Vector3(cam.transform.forward.x, 0, cam.transform.forward.z).normalized;
         Vector3 groundRight = new Vector3(cam.transform.right.x, 0, cam.transform.right.z).normalized;
-        Debug.DrawRay(transform.position, groundForward * 10, Color.red);
-        Debug.DrawRay(transform.position, groundRight * 10, Color.green);
 
-        
+        //TEST
+        //Debug.DrawRay(transform.position, groundForward * 10, Color.red);
+        //Debug.DrawRay(transform.position, groundRight * 10, Color.green);
 
-        
-        //Vector3 distanceFromCam = cam.position - transform.position;
         Vector3 movement = groundForward * Input.GetAxisRaw("Vertical") + groundRight * Input.GetAxisRaw("Horizontal");
         movement = movement.normalized;
         if (movement != Vector3.zero)
-        {/*
-            Debug.Log("x: " + movement.x);
-            Debug.Log("z: " + movement.z);
-            if(movement.z == -1) //backward
-            {
-                movement = new Vector3(moveHorizontal - groundForward.x, 0.0f, moveVertical - groundForward.z);
-            }
-            else if(movement.z == 1) //forward
-            {
-                movement = new Vector3(camF.x - moveHorizontal, 0.0f, camF.z - moveVertical);
-            }
-            else if(movement.x == -1) //left
-            {
-                //movement = new Vector3(moveHorizontal - distanceFromCam.x, 0.0f, moveVertical);
-            }
-            else if(movement.x == 1) //right
-            {
-
-            }
-            //else
-            //{
-            //     movement = new Vector3(moveHorizontal - distanceFromCam.x, 0.0f, moveVertical - distanceFromCam.z);
-            //}
-            */
+        {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(movement), 0.15F);
             anim.SetFloat("MoveSpeed",1.0f);
+            speed = runSpeed;
         }
         else{
             anim.SetFloat("MoveSpeed", 0.0f);
         }
-        transform.Translate(movement * speed * Time.deltaTime, Space.World);
-        
-        //-----------------------------------------------------------
-        
-        //transform.rotation = cam.rotation;
-        
-        //float yStore = moveDirection.y;
-        //moveDirection = (transform.forward * Input.GetAxis("Vertical")) + (transform.right * Input.GetAxis("Horizontal"));
-        //moveDirection = moveDirection.normalized * moveSpeed;
-        //moveDirection.y = yStore;
-
-        //controller.Move(moveDirection * Time.deltaTime);
-        //if(Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0)
-        //{
-        //    Debug.Log("REEEE");
-        //    anim.SetFloat("MoveSpeed",1.0f);
-        //    transform.rotation = Quaternion.Euler(0f,pivot.rotation.eulerAngles.y,0f);
-        //    Quaternion newRotation = Quaternion.LookRotation(new Vector3(moveDirection.x,0f,moveDirection.z));
-        //    transform.rotation = Quaternion.Slerp(transform.rotation,newRotation,rotateSpeed * Time.deltaTime);
-        //}
-        //else
-        //{
-        //    anim.SetFloat("MoveSpeed", 0.0f);
-        //}
-
-        //    moveDirection = new Vector3(Input.GetAxis("Horizontal"),0,Input.GetAxis("Vertical"));
-        //    moveDirection = transform.TransformDirection(moveDirection);
-        //    moveDirection *= speed;
-        //    Debug.Log("HELLO");
-
-        //    if(Input.GetKey(KeyCode.A))
-        //    {
-        //        transform.RotateAround(point, Vector3.up, 20 * Time.deltaTime);
-        //    }
-        //    else if(Input.GetKey(KeyCode.D))
-        //    {
-        //        transform.RotateAround(point, -Vector3.up, 20 * Time.deltaTime);
-        //    }
+        //transform.Translate(movement * speed * Time.deltaTime, Space.World);
+        controller.Move(movement * speed * Time.deltaTime);
     }
 }

@@ -5,26 +5,53 @@ using UnityEngine;
 
 public class gamemanager : MonoBehaviour
 {
+    public PlayerSpawn checkPoint;
+    public GameObject camera;
     public GameObject StartScreen;
     public GameObject RetryScreen;
     public GameObject PauseScreen;
-    public PlayerMotion player;
+    public GameObject playerUI;
+    public GameObject player;
 
-    private float playerHealth = 1.0f;
+    public GameObject easyModeSpawn;
+
     public bool gameStart = false;
     public bool paused = false;
+    public bool reachedCheckPoint = false;
 
     // Start is called before the first frame update
     void Start()
     {
         StartScreen.SetActive(true);
         RetryScreen.SetActive(false);
+        playerUI.SetActive(false);
+        easyModeSpawn.SetActive(false);
         Time.timeScale = 0.0f;
+    }
+
+    public void setPlayer()
+    {
+        player = GameObject.FindWithTag("Player");
     }
 
     public void startGame()
     {
         StartScreen.SetActive(false);
+        playerUI.SetActive(true);
+        gameStart = true;
+        Time.timeScale = 1.0f;
+        checkPoint.placeAtFirstSpawn();
+        camera.GetComponent<CameraControl>().setCameraTarget();
+        easyModeSpawn.SetActive(true);
+        setPlayer();
+    }
+
+    public void HardMode()
+    {
+        StartScreen.SetActive(false);
+
+        
+        playerUI.SetActive(true);
         gameStart = true;
         Time.timeScale = 1.0f;
     }
@@ -32,6 +59,19 @@ public class gamemanager : MonoBehaviour
     public void restartGame()
     {
         SceneManager.LoadScene("Town");
+    }
+
+    public void returnToCheckPoint()
+    {
+        if(reachedCheckPoint == true)
+        {
+            checkPoint.placeAtBossSpawn();
+            gameStart = true;
+        }
+        else
+        {
+            restartGame();
+        }
     }
 
     public void endGame()
@@ -57,16 +97,15 @@ public class gamemanager : MonoBehaviour
         PauseScreen.SetActive(true);
     }
 
+    public void GameOver()
+    {
+        RetryScreen.SetActive(true);
+        gameStart = false;
+    }
+
     // Update is called once per frame
     void Update()
     {
-        playerHealth = player.GetComponent<PlayerStats>().currHealth;
-        if(playerHealth <= 0.0f)
-        {
-            RetryScreen.SetActive(true);
-            gameStart = false;
-        }
-
         if(Input.GetKeyDown(KeyCode.Escape) && gameStart == true)
         {
             if(paused == true)

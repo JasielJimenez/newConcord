@@ -9,17 +9,19 @@ public class EnemyStats : MonoBehaviour
     public float maxHealth = 1.0f;
     public float currHealth = 1.0f;
     public float power = 10.0f;
+    public float attackForce = 300;
     private float playerPower = 1.0f;
     public bool dead = false;
-
+    
     public float expValue;
     public bool gotExp = false;
 
+    public ParticleSystem particle;
     public GameObject player;
     // Start is called before the first frame update
     void Start()
     {
-        //anim = GetComponent<Animator>();
+        player = GameObject.FindWithTag("Player");
         playerPower = player.GetComponent<PlayerStats>().attack;
     }
 
@@ -29,6 +31,13 @@ public class EnemyStats : MonoBehaviour
         {
             Debug.Log("HIT");
             currHealth = currHealth - playerPower;
+            if(this.tag == "Slime")
+            {
+                
+                var emitParams = new ParticleSystem.EmitParams();
+                particle.Emit(emitParams,10);
+            }
+
             if(currHealth > -1)
             {
                 healthBar.localScale = new Vector3(currHealth / maxHealth , 1.0f);
@@ -37,8 +46,6 @@ public class EnemyStats : MonoBehaviour
             {
                 healthBar.localScale = new Vector3(0.0f , 1.0f);
             }
-            Debug.Log(playerPower);
-            //Debug.Log(currHealth);
         }
     }
 

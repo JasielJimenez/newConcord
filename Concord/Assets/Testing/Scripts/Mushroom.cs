@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class Mushroom : MonoBehaviour
 {
+    public bool trackPlayer = true;
     public bool inRange = false;
     public bool deadCheck = false;
     public float range = 5;
     public float attackRange = 2;
-    public Transform target;
-    public GameObject player;
+    public GameObject target;
     public GameObject enemy;
     public GameObject mushroomParent; //Used to destroy parent collider
     public GameObject hitBox;
@@ -21,6 +21,7 @@ public class Mushroom : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         anim.SetBool("isAlive", true);
+        target = GameObject.FindWithTag("Player");
         range = range * range;
         attackRange = attackRange * attackRange;
     }
@@ -28,7 +29,20 @@ public class Mushroom : MonoBehaviour
     public void attack()
     {
         anim.SetBool("AttackRange",true);
-        transform.LookAt(target);
+        if(trackPlayer == true)
+        {
+            transform.LookAt(target.transform);
+        }
+    }
+
+    public void FollowPlayer()
+    {
+        trackPlayer = true;
+    }
+
+    public void StopFollowPlayer()
+    {
+        trackPlayer = false;
     }
 
     public void startAttack()
@@ -46,7 +60,7 @@ public class Mushroom : MonoBehaviour
     void Update()
     {
         deadCheck = enemy.GetComponent<EnemyStats>().dead;
-        playerHealth = player.GetComponent<PlayerStats>().currHealth;
+        playerHealth = enemy.GetComponent<EnemyStats>().player.GetComponent<PlayerStats>().currHealth;
         if(deadCheck)
         {
             anim.SetBool("isAlive", false);
@@ -56,7 +70,7 @@ public class Mushroom : MonoBehaviour
         }
         else if(playerHealth > 0.0f)
         {
-            float distance = (target.position - transform.position).sqrMagnitude;
+            float distance = (target.transform.position - transform.position).sqrMagnitude;
             if(distance <= attackRange)
             {
                 attack();

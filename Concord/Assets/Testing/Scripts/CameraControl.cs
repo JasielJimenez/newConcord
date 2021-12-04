@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraControl : MonoBehaviour
 {
-    public const float YAngle_Min = 10.0f;
+    public const float YAngle_Min = 5.0f;
     public const float YAngle_Max = 50.0f;
     public GameObject gamemanager;
     public Transform lookAt;
@@ -23,6 +23,11 @@ public class CameraControl : MonoBehaviour
         camTransform = transform;
     }
 
+    public void setCameraTarget()
+    {
+        lookAt = GameObject.FindWithTag("Player").transform;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -37,12 +42,26 @@ public class CameraControl : MonoBehaviour
 
     void LateUpdate()
     {
-        if(gamemanager.GetComponent<gamemanager>().gameStart == true && gamemanager.GetComponent<gamemanager>().paused == false)
+        if(gamemanager.GetComponent<gamemanager>().gameStart == true && gamemanager.GetComponent<gamemanager>().paused == false && lookAt != null)
         {
-            Vector3 dir = new Vector3(0,1,-distance);
+            Vector3 dir = new Vector3(0,0,-distance);
             Quaternion rotation = Quaternion.Euler(currentY,currentX,0);
             camTransform.position = lookAt.position + rotation * dir;
             camTransform.LookAt(lookAt.position);
+            if(Input.mouseScrollDelta.y > 0)
+            {
+                if(distance > 4.0f)
+                {
+                    distance = distance - 0.25f;
+                }
+            }
+            else if(Input.mouseScrollDelta.y < 0)
+            {
+                if(distance < 8.0f)
+                {
+                    distance = distance + 0.25f;
+                }
+            }
         }
     }
 }

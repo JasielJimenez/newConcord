@@ -4,17 +4,16 @@ using UnityEngine;
 
 public class Key : MonoBehaviour
 {
-    public GameObject bossDoor;
+    public GameObject levelManager;
     // Start is called before the first frame update
     void Start()
     {
-        
-        bossDoor.SetActive(true);
+
     }
 
     void OnTriggerEnter(Collider other)
     {
-        bossDoor.SetActive(false);
+        levelManager.GetComponent<LevelManager>().OpenBossDoor();
     }
 
     // Update is called once per frame
